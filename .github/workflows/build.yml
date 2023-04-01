@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2019
+    runs-on: windows-latest
     defaults:
       run:
         shell: msys2 {0}
@@ -39,18 +39,18 @@ jobs:
         }
       shell: pwsh
     - name: Checkout x265
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: x265
         fetch-depth: 0
     - name: Cache FFmpeg
       id: cache-ff
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ffmpeg
         key: ${{matrix.target_cpu}}-${{matrix.toolchain}}-ff
     - name: Checkout FFmpeg
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: ffmpeg
         repository: FFmpeg/FFmpeg
@@ -58,12 +58,12 @@ jobs:
       if: steps.cache-ff.outputs.cache-hit != 'true'
     - name: Cache mimalloc
       id: cache-mi
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: mimalloc
         key: ${{matrix.target_cpu}}-${{matrix.toolchain}}-mi-v2
     - name: Checkout mimalloc
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: mimalloc
         repository: AmusementClub/mimalloc2
@@ -143,7 +143,7 @@ jobs:
         mkdir dist
         cp ${{env.DLL_DEPS}} build/10b*/x265*.exe dist
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: x265-win64-${{matrix.target_cpu}}-${{matrix.toolchain}}-full
         path: dist/*
