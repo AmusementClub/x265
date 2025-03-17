@@ -755,6 +755,7 @@ configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
                "${PROJECT_BINARY_DIR}/x265_config.h")
 
 if(USE_MIMALLOC)
+    add_definitions(-DMI_OVERRIDE=ON)
     find_package(mimalloc REQUIRED)
     add_definitions(-DUSE_MIMALLOC)
     list(APPEND PLATFORM_LIBS "-L${MIMALLOC_LIBRARY_DIR}" -lmimalloc-static)
