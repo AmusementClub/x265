@@ -37,6 +37,7 @@
 
 #ifdef USE_MIMALLOC
 #include <mimalloc.h>
+#include <mimalloc-override.h>
 #endif
 
 namespace X265_NS {
