@@ -105,6 +105,13 @@ jobs:
     - name: Install mimalloc
       run: ninja install
       working-directory: mimalloc/build
+    - name: Fix mimalloc static lib path
+      run: |
+        for d in $(find /usr/local/lib -maxdepth 1 -type d -name "mimalloc-*"); do
+          if [ -f "$d/libmimalloc.a" ]; then
+            mv "$d/libmimalloc.a" "$d/libmimalloc-static.a"
+          fi
+        done
     - name: Setup build dir
       run: mkdir -p build/8b build/10b build/12b
     - name: Download profdata
