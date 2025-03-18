@@ -78,7 +78,6 @@ jobs:
         install: >-
           p7zip
           base-devel
-          mingw-w64-x86_64-${{matrix.toolchain}}
           mingw-w64-${{matrix.toolchain}}-x86_64-nasm
           mingw-w64-${{matrix.toolchain}}-x86_64-toolchain
           mingw-w64-${{matrix.toolchain}}-x86_64-cmake
@@ -96,6 +95,8 @@ jobs:
       working-directory: ffmpeg
     - name: Compile mimalloc
       run: |
+        # fix build
+        sed -i '/#if (defined(__GNUC__) || (defined(__clang__) && !defined(_MSC_VER)))  \/\* exclude clang-cl, see issue #631\*\/$/s/^/#if 0/' src/alloc.c
         mkdir build
         cd build
         cmake -GNinja .. -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_POLICY_DEFAULT_CMP0069=NEW -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON -DMI_BUILD_SHARED=OFF -DMI_BUILD_STATIC=ON -DMI_BUILD_OBJECT=OFF -DMI_BUILD_TESTS=OFF
