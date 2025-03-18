@@ -735,6 +735,7 @@ endif()
 option(ENABLE_SCC_EXT "Enable screen content coding extension in HEVC" OFF)
 if(ENABLE_SCC_EXT)
     add_definitions(-DENABLE_SCC_EXT)
+endif()
 
 if(USE_MIMALLOC)
     find_package(mimalloc REQUIRED)
