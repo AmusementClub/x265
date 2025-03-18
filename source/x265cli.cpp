@@ -130,8 +130,8 @@ namespace X265_NS {
         H0("-F/--frame-threads <integer>     Number of concurrently encoded frames. 0: auto-determined by core count\n");
         H0("   --[no-]wpp                    Enable Wavefront Parallel Processing. Default %s\n", OPT(param->bEnableWavefront));
         H0("   --[no-]slices <integer>       Enable Multiple Slices feature. Default %d\n", param->maxSlices);
-        H0("   --[no-]pmode                  Parallel mode analysis. Deprecated from release 4.1. Default %s\n", OPT(param->bDistributeModeAnalysis));
-        H0("   --[no-]pme                    Parallel motion estimation. Deprecated from release 4.1. Default %s\n", OPT(param->bDistributeMotionEstimation));
+        H0("   --[no-]pmode                  Parallel mode analysis. Default %s\n", OPT(param->bDistributeModeAnalysis));
+        H0("   --[no-]pme                    Parallel motion estimation. Default %s\n", OPT(param->bDistributeMotionEstimation));
         H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
         H0("\nPresets:\n");
         H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");
@@ -299,15 +299,16 @@ namespace X265_NS {
             "                                    - 0 : Disabled.\n"
             "                                    - 1 : Store/Load ctu distortion to/from the file specified in analysis-save/load.\n"
             "                                Default 0 - Disabled\n");
-        H0("   --aq-mode <integer>           Mode for Adaptive Quantization - Default %d\n"
-           "                                     - 0 : none\n"
-           "                                     - 1 : uniform AQ\n"
-           "                                     - 2 : auto variance\n"
-           "                                     - 3 : variance with bias to dark scenes\n"
-           "                                     - 4 : auto variance with edge information\n"
-           "                                     - 5 : auto variance with edge information and bias to dark scenes.\n", param->rc.aqMode);
+        H0("   --aq-mode <integer>           Mode for Adaptive Quantization\n"
+           "                                   - 0:none\n"
+           "                                   - 1:uniform AQ\n"
+           "                                   - 2:auto variance\n"
+           "                                   - 3:auto variance with bias to dark scenes\n"
+           "                                   - 4:auto variance with edge information.\n"
+           "                                   - 5:auto variance with edge information and bias to dark scenes.\n"
+           "                                 Default %d\n", param->rc.aqMode);
         H0("   --[no-]limit-aq1              Use QP offset determined by aq-mode 1 (uniform AQ) as hard upper limit on QP offset allowed in aq-mode 2-5. This (might) help in scenes with large complexity differences among blocks. Default is %s\n", OPT(param->rc.limitAq1));
-        H0("   --[no-]hevc-aq                Mode for HEVC Adaptive Quantization. Default %.2f\n", OPT(param->rc.hevcAq));
+        H0("   --[no-]hevc-aq                Mode for HEVC Adaptive Quantization. Default %s\n", OPT(param->rc.hevcAq));
         H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
         H0("   --aq-bias-strength <float>    Sets the bias to dark strength in AQ modes 3 and 5. Default %.2f\n", param->rc.aqBiasStrength);
         H0("   --limit-aq1-strength <float>  Sets the aq-strength aq-mode 1 when limit-aq1 is enabled (0 to 3.0). Default %.2f\n", param->rc.limitAq1Strength);
@@ -735,12 +736,6 @@ namespace X265_NS {
 
     bool CLIOptions::parse(int argc, char **argv)
     {
-        if (argc <= 1)
-        {
-            x265_log(NULL, X265_LOG_ERROR, "No input file. Run x265 --help for a list of options.\n");
-            return true;
-        }
-
         bool bError = false;
         int bShowHelp = false;
         int inputBitDepth = 8;
@@ -759,6 +754,12 @@ namespace X265_NS {
         const char *profile = NULL;
         int svtEnabled = 0;
         argCnt = argc;
+
+        if (argc <= 1)
+        {
+            x265_log(NULL, X265_LOG_ERROR, "No input file. Run x265 --help for a list of options.\n");
+            return true;
+        }
 
         /* Presets are applied before all other options. */
         for (optind = 0;;)

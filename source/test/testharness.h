@@ -89,7 +89,7 @@ static inline uint32_t __rdtsc(void)
     a = clock();
 #elif  X265_ARCH_ARM64
     asm volatile("isb" : : : "memory");
-    asm volatile("mrs %x0, cntvct_el0" : "=r"(a));
+    asm volatile("mrs %0, cntvct_el0" : "=r"(a));
 #endif
     return a;
 }
@@ -160,14 +160,14 @@ void PFX(checkasm_stack_clobber)(uint64_t clobber, ...);
         PFX(checkasm_stack_clobber)(m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, \
                                     m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, \
                                     m_rand, m_rand, m_rand, m_rand, m_rand), /* max_args+6 */ \
-        PFX(checkasm_call)((intptr_t(*)())reinterpret_cast<void*>(func), &m_ok, 0, 0, 0, 0, __VA_ARGS__))
+        PFX(checkasm_call)((intptr_t(*)())func, &m_ok, 0, 0, 0, 0, __VA_ARGS__))
 
 #define checked_float(func, ...) ( \
         m_ok = 1, m_rand = (rand() & 0xffff) * 0x0001000100010001ULL, \
         PFX(checkasm_stack_clobber)(m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, \
                                     m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, \
                                     m_rand, m_rand, m_rand, m_rand, m_rand), /* max_args+6 */ \
-        PFX(checkasm_call_float)((float(*)())reinterpret_cast<void*>(func), &m_ok, 0, 0, 0, 0, __VA_ARGS__))
+        PFX(checkasm_call_float)((float(*)())func, &m_ok, 0, 0, 0, 0, __VA_ARGS__))
 #define reportfail() if (!m_ok) { fflush(stdout); fprintf(stderr, "stack clobber check failed at %s:%d", __FILE__, __LINE__); abort(); }
 #elif ARCH_X86
 #define checked(func, ...) PFX(checkasm_call)((intptr_t(*)())func, &m_ok, __VA_ARGS__);

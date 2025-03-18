@@ -347,9 +347,6 @@ void x265_param_default(x265_param* param)
     param->reconfigWindowSize = 0;
     param->decoderVbvMaxRate = 0;
     param->bliveVBV2pass = 0;
-    param->rc.cuTreeStrength = (param->rc.hevcAq ? 6.0 : 5.0) * (1.0 - param->rc.qCompress);
-    param->rc.cuTreeMinQpOffset = -QP_MAX_MAX;
-    param->rc.cuTreeMaxQpOffset = QP_MAX_MAX;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -445,6 +442,7 @@ void x265_param_default(x265_param* param)
     param->svtHevcParam = svtParam;
     svt_param_default(param);
 #endif
+
     /* Film grain characteristics model filename */
     param->filmGrain = NULL;
     param->aomFilmGrain = NULL;
@@ -1769,8 +1767,6 @@ int x265_check_params(x265_param* param)
 {
 #define CHECK(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
-    CHECK((uint64_t)param->sourceWidth * param->sourceHeight > 142606336,
-          "Input video resolution exceeds the maximum supported luma samples 142,606,336 (16384x8704) of Level 7.2.");
     CHECK(param->uhdBluray == 1 && (X265_DEPTH != 10 || param->internalCsp != 1 || param->interlaceMode != 0),
         "uhd-bd: bit depth, chroma subsample, source picture type must be 10, 4:2:0, progressive");
     CHECK(param->maxCUSize != 64 && param->maxCUSize != 32 && param->maxCUSize != 16,
@@ -1988,7 +1984,7 @@ int x265_check_params(x265_param* param)
     CHECK(param->rc.rateControlMode == X265_RC_CQP && param->rc.bStatRead,
           "Constant QP is incompatible with 2pass");
     CHECK(param->rc.bStrictCbr && (param->rc.bitrate <= 0 || param->rc.vbvBufferSize <=0),
-          "Strict-cbr cannot be applied without specifying both target bitrate and vbv bufsize");
+          "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
     CHECK(strlen(param->analysisSave) && (param->analysisSaveReuseLevel < 0 || param->analysisSaveReuseLevel > 10),
         "Invalid analysis save refine level. Value must be between 1 and 10 (inclusive)");
     CHECK(strlen(param->analysisLoad) && (param->analysisLoadReuseLevel < 0 || param->analysisLoadReuseLevel > 10),
@@ -2141,19 +2137,6 @@ int x265_check_params(x265_param* param)
         if (checkValid)     x265_log(param, X265_LOG_WARNING, "Invalid intra constraint flag, bit depth constraint flag and chroma format constraint flag combination for a RExt profile. Disabling SCC \n");
         if (checkValid)
             param->bEnableSCC = 0;
-    }
-    if (!!param->bEnableSCC)
-    {
-        if (param->bEnableRdRefine && param->bDynamicRefine)
-        {
-            param->bEnableRdRefine = 0;
-            x265_log(param, X265_LOG_WARNING, "Disabling rd-refine as it can not be used with scc and dynamic-refine\n");
-        }
-        if (param->bEnableRdRefine && param->interRefine > 0)
-        {
-            param->bEnableRdRefine = 0;
-            x265_log(param, X265_LOG_WARNING, "Disabling rd-refine as it can not be used with scc and inter-refine\n");
-        }
     }
     CHECK(!!param->bEnableSCC&& param->rdLevel != 6, "Enabling scc extension in x265 requires rdlevel of 6 ");
 #endif
@@ -2386,18 +2369,18 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     }
     else if (p->rc.rateControlMode == X265_RC_CQP)
         s += snprintf(s, bufSize - (s - buf), " qp=%d", p->rc.qp);
-    s += sprintf(s, " qscale-mode=%d", p->rc.qScaleMode);
+    s += snprintf(s, bufSize - (s - buf), " qscale-mode=%d", p->rc.qScaleMode);
 
     BOOL(p->bLossless, "lossless");
     BOOL(p->bCULossless, "cu-lossless");
 
-    s += sprintf(s, " aq-mode=%d", p->rc.aqMode);
+    s += snprintf(s, bufSize - (s - buf), " aq-mode=%d", p->rc.aqMode);
     BOOL(p->rc.limitAq1, "limit-aq1");
-    s += sprintf(s, " aq-strength=%.2f", p->rc.aqStrength);
-    s += sprintf(s, " aq-bias-strength=%.2f", p->rc.aqBiasStrength);
-    s += sprintf(s, " limit-aq1-strength=%.2f", p->rc.limitAq1Strength);
-    s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
-    s += sprintf(s, " crqpoffs=%d", p->crQpOffset);
+    s += snprintf(s, bufSize - (s - buf), " aq-strength=%.2f", p->rc.aqStrength);
+    s += snprintf(s, bufSize - (s - buf), " aq-bias-strength=%.2f", p->rc.aqBiasStrength);
+    s += snprintf(s, bufSize - (s - buf), " limit-aq1-strength=%.2f", p->rc.limitAq1Strength);
+    s += snprintf(s, bufSize - (s - buf), " cbqpoffs=%d", p->cbQpOffset);
+    s += snprintf(s, bufSize - (s - buf), " crqpoffs=%d", p->crQpOffset);
     if (!(p->rc.rateControlMode == X265_RC_CQP && p->rc.qp == 0))
     {
         s += snprintf(s, bufSize - (s - buf), " ipratio=%.2f", p->rc.ipFactor);
@@ -2405,11 +2388,11 @@ char *x265_param2string(x265_param* p, int padx, int pady)
             s += snprintf(s, bufSize - (s - buf), " pbratio=%.2f", p->rc.pbFactor);
     }
 
-    s += sprintf(s, " psy-rd=%.2f", p->psyRd);
-    s += sprintf(s, " psy-rdoq=%.2f", p->psyRdoq);
-    s += sprintf(s, " psy-bscale=%d", p->psyScaleB);
-    s += sprintf(s, " psy-pscale=%d", p->psyScaleP);
-    s += sprintf(s, " psy-iscale=%d", p->psyScaleI);
+    s += snprintf(s, bufSize - (s - buf), " psy-rd=%.2f", p->psyRd);
+    s += snprintf(s, bufSize - (s - buf), " psy-rdoq=%.2f", p->psyRdoq);
+    s += snprintf(s, bufSize - (s - buf), " psy-bscale=%d", p->psyScaleB);
+    s += snprintf(s, bufSize - (s - buf), " psy-pscale=%d", p->psyScaleP);
+    s += snprintf(s, bufSize - (s - buf), " psy-iscale=%d", p->psyScaleI);
 
     BOOL(p->bEnableLoopFilter, "deblock");
     if (p->bEnableLoopFilter)
@@ -2454,9 +2437,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     // Less important parameters here
 
     BOOL(p->rc.cuTree, "cutree");
-    s += sprintf(s, " cutree-strength=%.2f", p->rc.cuTreeStrength);
-    s += sprintf(s, " cutree-minqpoffs=%.2f", p->rc.cuTreeMinQpOffset);
-    s += sprintf(s, " cutree-maxqpoffs=%.2f", p->rc.cuTreeMaxQpOffset);
+    s += snprintf(s, bufSize - (s - buf), " cutree-strength=%.2f", p->rc.cuTreeStrength);
+    s += snprintf(s, bufSize - (s - buf), " cutree-minqpoffs=%.2f", p->rc.cuTreeMinQpOffset);
+    s += snprintf(s, bufSize - (s - buf), " cutree-maxqpoffs=%.2f", p->rc.cuTreeMaxQpOffset);
     BOOL(p->bEnableSAO, "sao");
     BOOL(p->bEnableRectInter, "rect");
     BOOL(p->bEnableAMP, "amp");

@@ -1082,16 +1082,6 @@ void Encoder::copyUserSEIMessages(Frame *frame, const x265_picture* pic_in)
     }
 
     int numPayloads = pic_in->userSEI.numPayloads + toneMapPayload + userPayload;
-
-    // TODO: we may reuse buffer if become smaller than exist buffer
-    if (frame->m_userSEI.payloads && numPayloads != frame->m_userSEI.numPayloads)
-    {
-        for (int i = 0; i < frame->m_userSEI.numPayloads; i++)
-            delete[] frame->m_userSEI.payloads[i].payload;
-        delete[] frame->m_userSEI.payloads;
-        frame->m_userSEI.payloads = NULL;
-    }
-
     frame->m_userSEI.numPayloads = numPayloads;
 
     if (frame->m_userSEI.numPayloads)
@@ -1112,12 +1102,6 @@ void Encoder::copyUserSEIMessages(Frame *frame, const x265_picture* pic_in)
             else
                 input = pic_in->userSEI.payloads[i];
 
-            // TODO: condition may improve, because buffer size may change from big to small, but never back to original allocate size
-            if (frame->m_userSEI.payloads[i].payload && frame->m_userSEI.payloads[i].payloadSize < input.payloadSize)
-            {
-                delete[] frame->m_userSEI.payloads[i].payload;
-                frame->m_userSEI.payloads[i].payload = NULL;
-            }
             if (!frame->m_userSEI.payloads[i].payload)
                 frame->m_userSEI.payloads[i].payload = new uint8_t[input.payloadSize];
             memcpy(frame->m_userSEI.payloads[i].payload, input.payload, input.payloadSize);
@@ -1599,6 +1583,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 inFrame[layer]->m_encodeStartTime = x265_mdate();
                 /* Set lowres scencut and satdCost here to aovid overwriting ANALYSIS_READ
                    decision by lowres init*/
+                int cuCount = inFrame[layer]->m_lowres.maxBlocksInRow * inFrame[layer]->m_lowres.maxBlocksInCol;
+                memset(inFrame[layer]->m_lowres.intraCost, 0, sizeof(int32_t) * cuCount);
                 inFrame[layer]->m_lowres.bScenecut = false;
                 inFrame[layer]->m_lowres.satdCost = (int64_t)-1;
                 inFrame[layer]->m_lowresInit = false;
@@ -2734,14 +2720,14 @@ char* Encoder::statsString(EncStats& stat, char* buffer, size_t bufferSize)
 
     if (m_param->bEnablePsnr)
     {
-        len += snprintf(buffer + len, bufferSize - len,"  PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf",
+        len += snprintf(buffer + len, sizeof(buffer) - len,"  PSNR Mean: Y:%.3lf U:%.3lf V:%.3lf",
                        stat.m_psnrSumY / (double)stat.m_numPics,
                        stat.m_psnrSumU / (double)stat.m_numPics,
                        stat.m_psnrSumV / (double)stat.m_numPics);
     }
     if (m_param->bEnableSsim)
     {
-        snprintf(buffer + len, bufferSize - len, "  SSIM Mean: %.6lf (%.3lfdB)",
+        snprintf(buffer + len, sizeof(buffer) - len, "  SSIM Mean: %.6lf (%.3lfdB)",
                 stat.m_globalSsim / (double)stat.m_numPics,
                 x265_ssim2dB(stat.m_globalSsim / (double)stat.m_numPics));
     }

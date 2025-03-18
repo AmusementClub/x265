@@ -2960,19 +2960,12 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
 
         if (m_refineLevel > 1 || (m_refineLevel && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP  && !mode.cu.isSkipped(0)))
         {
-            if ((m_slice->m_origSliceType != I_SLICE))
-            {
-                if (parentCTU.m_cuDepth[cuGeom.absPartIdx] < 4 && mightNotSplit)
-                    m_evaluateInter = 1;
-                else
-                    bDecidedDepth = true;
-                m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
-                m_evaluateInter = 0;
-            }
+            if (parentCTU.m_cuDepth[cuGeom.absPartIdx] < 4 && mightNotSplit)
+                m_evaluateInter = 1;
             else
-            {
-                compressIntraCU(parentCTU, cuGeom, qp);
-            }
+                bDecidedDepth = true;
+            m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
+            m_evaluateInter = 0;
         }
     }
     if (!bDecidedDepth || split)

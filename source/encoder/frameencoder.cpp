@@ -464,7 +464,7 @@ void FrameEncoder::compressFrame(int layer)
     memset(&(m_frame[layer]->m_encData->m_frameStats), 0, sizeof(m_frame[layer]->m_encData->m_frameStats));
     m_sLayerId = layer;
 
-    if (m_param->rc.aqMode != X265_AQ_EDGE_BIASED && m_param->rc.aqMode != X265_AQ_EDGE && m_param->recursionSkipMode == EDGE_BASED_RSKIP)
+    if (!m_param->bHistBasedSceneCut && m_param->rc.aqMode != X265_AQ_EDGE_BIASED && m_param->rc.aqMode != X265_AQ_EDGE && m_param->recursionSkipMode == EDGE_BASED_RSKIP)
     {
         int height = m_frame[layer]->m_fencPic->m_picHeight;
         int width = m_frame[layer]->m_fencPic->m_picWidth;
@@ -2435,7 +2435,7 @@ void FrameEncoder::vmafFrameLevelScore()
 
 Frame** FrameEncoder::getEncodedPicture(NALList& output)
 {
-    if (m_frame[0] && (m_param->numLayers <= 1 || (MAX_LAYERS > 1 && m_frame[1])))
+    if (m_frame[0] && (m_param->numLayers <= 1 || m_frame[1]))
     {
         /* block here until worker thread completes */
         m_done.wait();

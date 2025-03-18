@@ -410,7 +410,7 @@ void Frame::destroy()
         X265_FREE_ZERO(m_classifyCount);
     }
 
-    if (m_param->rc.aqMode == X265_AQ_EDGE || m_param->rc.aqMode == X265_AQ_EDGE_BIASED || (m_param->rc.zonefileCount && m_param->rc.aqMode != 0))
+    if (m_param->rc.aqMode == X265_AQ_EDGE || (m_param->rc.zonefileCount && m_param->rc.aqMode != 0))
     {
         X265_FREE(m_edgePic);
         X265_FREE(m_gaussianPic);

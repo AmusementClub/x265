@@ -55,7 +55,7 @@ jobs:
       with:
         path: ffmpeg
         repository: FFmpeg/FFmpeg
-        ref: n4.4
+        ref: n7.1
       if: steps.cache-ff.outputs.cache-hit != 'true'
     - name: Cache mimalloc
       id: cache-mi
@@ -202,7 +202,7 @@ jobs:
       with:
         path: ffmpeg
         repository: FFmpeg/FFmpeg
-        ref: n4.4
+        ref: n7.1
       if: steps.cache-ff.outputs.cache-hit != 'true'
     - name: Cache mimalloc
       id: cache-mi
