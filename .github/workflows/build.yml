@@ -78,7 +78,7 @@ jobs:
         install: >-
           p7zip
           base-devel
-          mingw-w64-${{matrix.toolchain}}-x86_64
+          mingw-w64-x86_64-${{matrix.toolchain}}
           mingw-w64-${{matrix.toolchain}}-x86_64-nasm
           mingw-w64-${{matrix.toolchain}}-x86_64-toolchain
           mingw-w64-${{matrix.toolchain}}-x86_64-cmake
