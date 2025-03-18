@@ -755,14 +755,10 @@ configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
                "${PROJECT_BINARY_DIR}/x265_config.h")
 
 if(USE_MIMALLOC)
-    add_definitions(-DMI_OVERRIDE=ON)
     find_package(mimalloc REQUIRED)
     add_definitions(-DUSE_MIMALLOC)
     list(APPEND PLATFORM_LIBS "-L${MIMALLOC_LIBRARY_DIR}" -lmimalloc-static)
     include_directories(${MIMALLOC_INCLUDE_DIR})
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nodefaultlibs")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lmimalloc-static")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++")
 endif()
 
 cmake_policy(SET CMP0069 NEW)
